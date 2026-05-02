@@ -26,7 +26,6 @@ public class PriorityMessageBusTests
     [Test]
     public async Task Publish_And_Subscribe_MessageIsReceived()
     {
-        // Arrange
         var received = new TaskCompletionSource<Message>();
         await _bus.SubscribeAsync("test.topic", msg =>
         {
@@ -36,10 +35,8 @@ public class PriorityMessageBusTests
 
         var message = new Message { Topic = "test.topic", Payload = "hello", Priority = MessagePriority.Normal };
 
-        // Act
         await _bus.PublishAsync(message);
 
-        // Assert
         var result = await received.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.That(result.Id, Is.EqualTo(message.Id));
         Assert.That(result.Payload, Is.EqualTo("hello"));
@@ -48,7 +45,6 @@ public class PriorityMessageBusTests
     [Test]
     public async Task CriticalMessages_ProcessedBeforeNormal()
     {
-        // Arrange
         var received = new List<MessagePriority>();
         var tcs = new TaskCompletionSource();
         int count = 0;
@@ -60,21 +56,18 @@ public class PriorityMessageBusTests
             return Task.CompletedTask;
         });
 
-        // Act - publish in reverse priority order
         await _bus.PublishAsync(new Message { Topic = "priority.test", Priority = MessagePriority.Low, Payload = "low" });
         await _bus.PublishAsync(new Message { Topic = "priority.test", Priority = MessagePriority.Normal, Payload = "normal" });
         await _bus.PublishAsync(new Message { Topic = "priority.test", Priority = MessagePriority.Critical, Payload = "critical" });
 
         await tcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-        // The first message processed should be the Critical one
         Assert.That(received[0], Is.EqualTo(MessagePriority.Critical));
     }
 
     [Test]
     public async Task Wildcard_Subscription_ReceivesAllMessages()
     {
-        // Arrange
         var received = new List<Message>();
         await _bus.SubscribeAsync("*", msg =>
         {
@@ -82,19 +75,16 @@ public class PriorityMessageBusTests
             return Task.CompletedTask;
         });
 
-        // Act
         await _bus.PublishAsync(new Message { Topic = "topic.a", Payload = "A" });
         await _bus.PublishAsync(new Message { Topic = "topic.b", Payload = "B" });
-        await Task.Delay(500); // Give processor time
+        await Task.Delay(500);
 
-        // Assert
         Assert.That(received.Count, Is.EqualTo(2));
     }
 
     [Test]
     public async Task Unsubscribe_StopsReceivingMessages()
     {
-        // Arrange
         int callCount = 0;
         await _bus.SubscribeAsync("unsub.test", _ =>
         {

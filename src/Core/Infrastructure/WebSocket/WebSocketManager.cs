@@ -22,7 +22,6 @@ public class WebSocketManager : IWebSocketManager
         _logger.LogInformation("WebSocket client registered: {ClientId}. Total clients: {Count}",
             clientId, _clients.Count);
 
-        // Send welcome message
         var welcome = $"{{\"type\":\"connected\",\"clientId\":\"{clientId}\",\"serverTime\":\"{DateTime.UtcNow:O}\"}}";
         await SendToClientAsync(clientId, welcome, ct);
     }

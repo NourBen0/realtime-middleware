@@ -1,4 +1,3 @@
-# .NET
 bin/
 obj/
 *.user
@@ -8,7 +7,6 @@ logs/
 *.trx
 TestResults/
 
-# Python
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -16,10 +14,8 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Docker
 .env
 
-# IDE
 .idea/
 .vscode/
 *.DS_Store

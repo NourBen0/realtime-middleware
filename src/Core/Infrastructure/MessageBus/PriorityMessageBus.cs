@@ -6,13 +6,8 @@ using RealtimeMiddleware.Domain.Interfaces;
 
 namespace RealtimeMiddleware.Infrastructure.MessageBus;
 
-/// <summary>
-/// Priority-based in-memory message bus. Messages with higher priority are dequeued first.
-/// Thread-safe implementation using PriorityQueue + SemaphoreSlim.
-/// </summary>
 public class PriorityMessageBus : IMessageBus, IDisposable
 {
-    // PriorityQueue uses lowest int = highest priority, so we negate the enum value
     private readonly PriorityQueue<Message, int> _queue = new();
     private readonly ConcurrentDictionary<string, List<Func<Message, Task>>> _subscriptions = new();
     private readonly SemaphoreSlim _semaphore = new(0);
@@ -31,7 +26,6 @@ public class PriorityMessageBus : IMessageBus, IDisposable
     {
         lock (_lock)
         {
-            // Negate so Critical(3) → -3 = highest priority in PriorityQueue
             _queue.Enqueue(message, -(int)message.Priority);
         }
 
@@ -96,7 +90,6 @@ public class PriorityMessageBus : IMessageBus, IDisposable
 
     private async Task DispatchMessageAsync(Message message)
     {
-        // Try exact topic match, then wildcard "*"
         var topics = new[] { message.Topic, "*" };
 
         foreach (var topic in topics)

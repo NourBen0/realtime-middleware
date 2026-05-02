@@ -31,17 +31,17 @@ public class MessageServiceTests
     [Test]
     public async Task PublishAsync_SavesMessageAndPublishesToBus()
     {
-        // Arrange
+
         var request = new PublishMessageRequest("sensors.temperature", "{\"value\": 36.5}", MessagePriority.High);
         _repoMock.Setup(r => r.AddAsync(It.IsAny<Message>(), default)).Returns(Task.CompletedTask);
         _busMock.Setup(b => b.PublishAsync(It.IsAny<Message>(), default)).Returns(Task.CompletedTask);
         _wsMock.Setup(w => w.BroadcastAsync(It.IsAny<string>(), default)).Returns(Task.CompletedTask);
 
-        // Act
-        var result = await _service.PublishAsync(request);
-        await Task.Delay(100); // Let fire-and-forget complete
 
-        // Assert
+        var result = await _service.PublishAsync(request);
+        await Task.Delay(100);
+
+
         Assert.That(result.Topic, Is.EqualTo("sensors.temperature"));
         Assert.That(result.Priority, Is.EqualTo(MessagePriority.High));
         _repoMock.Verify(r => r.AddAsync(It.IsAny<Message>(), default), Times.Once);

@@ -41,14 +41,12 @@ public class MessageService : IMessageService
 
         await _repository.AddAsync(message, ct);
 
-        // Publish to message bus (async fire-and-forget with error handling)
         _ = Task.Run(async () =>
         {
             try
             {
                 await _messageBus.PublishAsync(message, ct);
 
-                // Broadcast to WebSocket clients
                 var wsMessage = System.Text.Json.JsonSerializer.Serialize(new WebSocketMessage(
                     "message",
                     message.Topic,

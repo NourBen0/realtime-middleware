@@ -4,9 +4,6 @@ using RealtimeMiddleware.Application.Interfaces;
 
 namespace RealtimeMiddleware.Infrastructure.MessageBus;
 
-/// <summary>
-/// Background service that periodically retries failed messages.
-/// </summary>
 public class RetryBackgroundService : BackgroundService
 {
     private readonly IMessageService _messageService;

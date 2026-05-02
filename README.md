@@ -1,10 +1,10 @@
-# 🚀 Realtime Middleware
+# Realtime Middleware
 
 > **High-performance real-time communication middleware** between C#/.NET and Python modules using WebSockets, a priority message bus, and a REST API — production-ready with Docker and CI/CD.
 
 ---
 
-## 📐 Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -33,18 +33,18 @@
 
 ### Key Design Decisions
 
-| Concern | Choice | Rationale |
-|---|---|---|
-| Message ordering | `PriorityQueue<Message, int>` | O(log n) dequeue, Critical messages first |
-| Serialization | System.Text.Json | Built-in, fast, AOT-friendly |
-| Auth | JWT Bearer | Stateless, works for both HTTP and WS |
-| Repository | In-memory (swappable) | Clean Architecture interface — drop in EF Core/Redis |
-| Retry | BackgroundService | Non-blocking, configurable interval |
-| Logging | Serilog structured | JSON-friendly, file + console sinks |
+| Concern          | Choice                        | Rationale                                            |
+| ---------------- | ----------------------------- | ---------------------------------------------------- |
+| Message ordering | `PriorityQueue<Message, int>` | O(log n) dequeue, Critical messages first            |
+| Serialization    | System.Text.Json              | Built-in, fast, AOT-friendly                         |
+| Auth             | JWT Bearer                    | Stateless, works for both HTTP and WS                |
+| Repository       | In-memory (swappable)         | Clean Architecture interface — drop in EF Core/Redis |
+| Retry            | BackgroundService             | Non-blocking, configurable interval                  |
+| Logging          | Serilog structured            | JSON-friendly, file + console sinks                  |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 realtime-middleware/
@@ -93,13 +93,13 @@ realtime-middleware/
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Option A — Docker (recommended)
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/realtime-middleware.git
+git clone https://github.com/NourBen0/realtime-middleware.git
 cd realtime-middleware
 
 # Start everything
@@ -247,14 +247,14 @@ Connect to `ws://localhost:5000/ws?clientId=my-client`
 
 ### Supported message types
 
-| Type | Direction | Description |
-|---|---|---|
-| `publish` | Client → Server | Publish a message to the bus |
-| `ping` | Client → Server | Keepalive ping |
-| `pong` | Server → Client | Response to ping |
-| `message` | Server → Client | Incoming message from bus |
-| `connected` | Server → Client | Connection confirmation |
-| `error` | Server → Client | Error response |
+| Type        | Direction       | Description                  |
+| ----------- | --------------- | ---------------------------- |
+| `publish`   | Client → Server | Publish a message to the bus |
+| `ping`      | Client → Server | Keepalive ping               |
+| `pong`      | Server → Client | Response to ping             |
+| `message`   | Server → Client | Incoming message from bus    |
+| `connected` | Server → Client | Connection confirmation      |
+| `error`     | Server → Client | Error response               |
 
 ### Example: send with `wscat`
 
@@ -271,7 +271,7 @@ wscat -c "ws://localhost:5000/ws?clientId=test-001"
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 ### C# tests (NUnit)
 
@@ -289,7 +289,7 @@ pytest tests/ -v
 
 ---
 
-## 🔄 Priority Queue Behavior
+## Priority Queue Behavior
 
 Messages are dequeued in priority order regardless of arrival time:
 
@@ -302,9 +302,10 @@ The `PriorityQueue<Message, int>` uses `-(int)priority` as the key, so `Critical
 
 ---
 
-## 🔁 Retry System
+## Retry System
 
 Failed messages are automatically retried by `RetryBackgroundService`:
+
 - Runs every **30 seconds**
 - Max **3 retries** per message
 - After 3 failures → message stays in `Failed` state (dead letter)
@@ -312,7 +313,7 @@ Failed messages are automatically retried by `RetryBackgroundService`:
 
 ---
 
-## 🌐 Extending to Production
+## Extending to Production
 
 ### Replace in-memory repository with EF Core
 
@@ -332,13 +333,13 @@ Replace `PriorityMessageBus` with a Redis Streams implementation while keeping t
 
 ---
 
-## 📜 Swagger UI
+## Swagger UI
 
 Available at: **http://localhost:5000/swagger** (Development mode)
 
 ---
 
-## 🏗️ CI/CD Pipeline
+## CI/CD Pipeline
 
 GitHub Actions pipeline (`.github/workflows/ci-cd.yml`):
 

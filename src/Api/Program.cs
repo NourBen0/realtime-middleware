@@ -13,9 +13,7 @@ using RealtimeMiddleware.Infrastructure.MessageBus;
 using RealtimeMiddleware.Infrastructure.Persistence;
 using RealtimeMiddleware.Infrastructure.WebSocket;
 
-// ────────────────────────────────────────────────────────────
-// Structured logging with Serilog
-// ────────────────────────────────────────────────────────────
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -29,13 +27,10 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
-// ────────────────────────────────────────────────────────────
-// Services Registration
-// ────────────────────────────────────────────────────────────
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger with JWT support
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -80,7 +75,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true
         };
 
-        // Allow JWT via WebSocket query string
         opts.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -95,7 +89,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Domain / Application / Infrastructure
 builder.Services.AddSingleton<IMessageRepository, InMemoryMessageRepository>();
 builder.Services.AddSingleton<IMessageBus, PriorityMessageBus>();
 builder.Services.AddSingleton<IWebSocketManager, WebSocketManager>();
@@ -103,16 +96,12 @@ builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 
-// Background services
 builder.Services.AddHostedService<RetryBackgroundService>();
 
-// CORS for dev
 builder.Services.AddCors(opts => opts.AddDefaultPolicy(p =>
     p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
-// ────────────────────────────────────────────────────────────
-// Pipeline
-// ────────────────────────────────────────────────────────────
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
@@ -129,9 +118,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// ────────────────────────────────────────────────────────────
-// WebSocket endpoint
-// ────────────────────────────────────────────────────────────
+
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
 
 app.Map("/ws", async (HttpContext context) =>
@@ -152,8 +139,8 @@ app.Map("/ws", async (HttpContext context) =>
     await handler.HandleAsync(socket, clientId, context.RequestAborted);
 });
 
-Log.Information("🚀 Realtime Middleware started. WebSocket: ws://localhost:5000/ws | API: http://localhost:5000/api");
+Log.Information("Realtime Middleware started. WebSocket: ws://localhost:5000/ws | API: http://localhost:5000/api");
 
 app.Run();
 
-public partial class Program { } // for test accessibility
+public partial class Program { }

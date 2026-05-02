@@ -5,10 +5,6 @@ using RealtimeMiddleware.Domain.Interfaces;
 
 namespace RealtimeMiddleware.Infrastructure.Persistence;
 
-/// <summary>
-/// In-memory repository for development/testing.
-/// Replace with EF Core / Redis for production.
-/// </summary>
 public class InMemoryMessageRepository : IMessageRepository
 {
     private readonly ConcurrentDictionary<Guid, Message> _store = new();
