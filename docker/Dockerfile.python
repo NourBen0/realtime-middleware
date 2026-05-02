@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN adduser --system --no-create-home appuser
+
+COPY python-client/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY python-client/src/ ./src/
+
+USER appuser
+
+ENV MIDDLEWARE_URL=ws://api:5000/ws
+ENV CLIENT_ID=python-docker-01
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python", "src/client.py"]

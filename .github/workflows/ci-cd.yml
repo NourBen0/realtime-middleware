@@ -1,0 +1,140 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_API: ${{ github.repository }}/middleware-api
+  IMAGE_PYTHON: ${{ github.repository }}/middleware-python
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # Job 1: C# Build & Test
+  # ──────────────────────────────────────────────────────────
+  dotnet-ci:
+    name: .NET Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore RealtimeMiddleware.sln
+
+      - name: Build
+        run: dotnet build RealtimeMiddleware.sln --no-restore -c Release
+
+      - name: Run unit tests
+        run: |
+          dotnet test src/Tests/RealtimeMiddleware.Tests.csproj \
+            --no-build \
+            --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dotnet-test-results
+          path: "**/*.trx"
+
+  # ──────────────────────────────────────────────────────────
+  # Job 2: Python Test
+  # ──────────────────────────────────────────────────────────
+  python-ci:
+    name: Python Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: python-client/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r python-client/requirements.txt
+
+      - name: Run tests
+        run: pytest python-client/tests/ -v --tb=short
+
+  # ──────────────────────────────────────────────────────────
+  # Job 3: Docker Build & Push (main branch only)
+  # ──────────────────────────────────────────────────────────
+  docker-publish:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [dotnet-ci, python-ci]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (API)
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_API }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.api
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata (Python)
+        id: meta-python
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PYTHON }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push Python image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.python
+          push: true
+          tags: ${{ steps.meta-python.outputs.tags }}
+          labels: ${{ steps.meta-python.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

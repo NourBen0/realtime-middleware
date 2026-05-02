@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+logs/
+*.trx
+TestResults/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Docker
+.env
+
+# IDE
+.idea/
+.vscode/
+*.DS_Store

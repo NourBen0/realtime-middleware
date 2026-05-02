@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  # ── C# Backend ──────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: middleware-api
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Key: "change-me-in-production-32chars!!"
+      Jwt__Issuer: "RealtimeMiddleware"
+      Jwt__Audience: "RealtimeMiddlewareClients"
+    volumes:
+      - api-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - middleware-net
+
+  # ── Python Client ────────────────────────────────────────
+  python-client:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    container_name: middleware-python
+    environment:
+      MIDDLEWARE_URL: "ws://api:5000/ws"
+      CLIENT_ID: "python-docker-01"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - middleware-net
+
+  # ── Optional: second Python client for multi-client demo ──
+  python-client-2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python
+    container_name: middleware-python-2
+    environment:
+      MIDDLEWARE_URL: "ws://api:5000/ws"
+      CLIENT_ID: "python-docker-02"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - middleware-net
+    profiles:
+      - multi-client
+
+volumes:
+  api-logs:
+
+networks:
+  middleware-net:
+    driver: bridge
